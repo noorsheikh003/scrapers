@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import datetime
+from datetime import datetime
 
 URL = 'https://heritagejewels.com.pk/'
 r = requests.get(URL)
@@ -14,23 +14,27 @@ table = soup.find('div', attrs={'data-collection-url': '/collections/best-seller
 if table:
     for row in table.findAll('div', attrs={"class": "t4s-product-info__inner"}):
         quote = {}
-        quote['name'] = row.find('h3', class_='t4s-product-title').text.strip()
-
-        price_div = row.find('div', class_='t4s-product-price')
-        if price_div:
-            quote['price'] = price_div.text.strip()
-        else:
-            quote['price'] = 'Price not found'
-    
-        quote['rating']=row.find('span', class_="jdgm-prev-badge__text").text.strip().replace("reviews", '')
         
+        # Safely extract the product name
+        name_tag = row.find('h3', class_='t4s-product-title')
+        quote['name'] = name_tag.text.strip() if name_tag else 'Name not found'
+
+        # Safely extract the product price
+        price_div = row.find('div', class_='t4s-product-price')
+        quote['price'] = price_div.text.strip() if price_div else 'Price not found'
+
+        # Safely extract the rating
+        rating_tag = row.find('span', class_="jdgm-prev-badge__text")
+        quote['rating'] = rating_tag.text.strip().replace("reviews", '') if rating_tag else 'Rating not found'
 
         data.append(quote)
 
 df = pd.DataFrame(data)
 
-current_time = str(datetime.datetime.now())
+# Use both current date and time for a unique filename
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-df.to_csv('file_' + current_time + '.csv', index=False)
+# Write the DataFrame to a CSV file with the current date and time in the filename
+df.to_csv(f'heritage_jewels_best_sellers_{current_time}.csv', index=False)
 
-print("Data written to heritage_jewels_best_sellers.csv")
+print(f"Data written to heritage_jewels_best_sellers_{current_time}.csv")
